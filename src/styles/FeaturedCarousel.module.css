@@ -1,0 +1,9 @@
+.carouselContainer {
+  margin: 0 auto;        /* center horizontally */
+  padding: 1px 0;       /* optional vertical padding */
+  max-width: 1200px;     /* limit total width */
+}
+
+.carouselitempadding {
+  padding: 0 4px; /* small horizontal gap between items */
+}
