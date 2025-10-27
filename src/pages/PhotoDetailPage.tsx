@@ -3,41 +3,22 @@ import {
   CircularProgress,
   Container,
   Divider,
+  Skeleton,
   Stack,
   Typography,
 } from "@mui/material";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useParams } from "react-router-dom";
-import type { Photo } from "@types";
-import { getPhotoByGuid } from "@services/photoService";
 import { Place } from "@mui/icons-material";
+import { usePhotos } from "@hooks/usePhotos";
 
 export default function PhotoDetailPage() {
   const { photoGuid } = useParams<{ photoGuid: string }>();
-  const [photo, setPhoto] = useState<Photo | null>(null);
-  const [loading, setLoading] = useState(true);
+
+  const { photo, isLoadingPhoto } = usePhotos(photoGuid!);
   const [imgLoading, setImgLoading] = useState(true);
 
-  useEffect(() => {
-    if (!photoGuid) return;
-
-    const fetchPhoto = async () => {
-      setLoading(true);
-      try {
-        const data = await getPhotoByGuid(photoGuid);
-        setPhoto(data);
-      } catch (error) {
-        console.error("Error fetching photo:", error);
-        setPhoto(null);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchPhoto();
-  }, [photoGuid]);
-
-  if (loading) {
+  if (isLoadingPhoto) {
     return (
       <Box sx={{ display: "flex", justifyContent: "center", mt: 10 }}>
         <CircularProgress />
@@ -70,20 +51,28 @@ export default function PhotoDetailPage() {
             flex: 3,
             justifyContent: "center",
             alignItems: "center",
+            position: "relative",
+            minHeight: { xs: 300, md: 600 },
+            maxHeight: 600,
           }}
         >
+          {/* Skeleton loading area */}
           {imgLoading && (
-            <Box
+            <Skeleton
+              variant="rectangular"
               sx={{
                 position: "absolute",
-                top: "50%",
-                left: "50%",
-                transform: "translate(-50%, -50%)",
+                width: "100%",
+                height: "100%",
+                top: 0,
+                left: 0,
+                borderRadius: 2,
               }}
-            >
-              <CircularProgress />
-            </Box>
+              animation="wave" // nice loading wave effect
+            />
           )}
+
+          {/* The Image area */}
           <Box
             component="img"
             src={photo.url}

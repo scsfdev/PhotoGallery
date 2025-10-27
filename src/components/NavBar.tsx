@@ -7,12 +7,18 @@ import {
   Box,
   Container,
   MenuItem,
+  LinearProgress,
 } from "@mui/material";
-import { Link as RouterLink } from "react-router-dom";
+
 import { Camera } from "@mui/icons-material";
+import { NavLink } from "react-router-dom";
+import MenuItemLink from "./MenuItemLink";
+import { useStore } from "@hooks/useStore";
+import { Observer } from "mobx-react-lite";
 
 export default function NavBar() {
   const isLoggedIn = false; // To be replaced with auth context later.
+  const { uiStore } = useStore();
 
   return (
     <Box sx={{ flexGrow: 1 }}>
@@ -21,6 +27,7 @@ export default function NavBar() {
         sx={{
           backgroundImage:
             "linear-gradient(90deg, #222044ff,  #673efaff, #1303f5ff)",
+          position: "relative",
         }}
       >
         <Container maxWidth={false}>
@@ -29,7 +36,7 @@ export default function NavBar() {
             <Box>
               <MenuItem
                 sx={{ display: "flex", gap: 1 }}
-                component={RouterLink}
+                component={NavLink}
                 to="/"
               >
                 <Camera fontSize="large" />
@@ -41,41 +48,11 @@ export default function NavBar() {
 
             {/* Navigation links */}
             <Box sx={{ display: "flex", gap: 2 }}>
-              <MenuItem
-                component={RouterLink}
-                to="/categories"
-                sx={{
-                  fontSize: "1rem",
-                  textTransform: "uppercase",
-                  fontWeight: "bold",
-                }}
-              >
-                Category
-              </MenuItem>
+              <MenuItemLink to="/categories">Category</MenuItemLink>
 
-              <MenuItem
-                component={RouterLink}
-                to="/about"
-                sx={{
-                  fontSize: "1rem",
-                  textTransform: "uppercase",
-                  fontWeight: "bold",
-                }}
-              >
-                About
-              </MenuItem>
+              <MenuItemLink to="/about">About</MenuItemLink>
 
-              <MenuItem
-                component={RouterLink}
-                to="/contact"
-                sx={{
-                  fontSize: "1rem",
-                  textTransform: "uppercase",
-                  fontWeight: "bold",
-                }}
-              >
-                Contact
-              </MenuItem>
+              <MenuItemLink to="/contact">Contact</MenuItemLink>
             </Box>
 
             {/* Right-side buttons */}
@@ -84,7 +61,7 @@ export default function NavBar() {
                 size="small"
                 variant="contained"
                 color="warning"
-                component={RouterLink}
+                component={NavLink}
                 to="/login"
               >
                 Login
@@ -94,7 +71,7 @@ export default function NavBar() {
                   size="small"
                   variant="contained"
                   color="error"
-                  component={RouterLink}
+                  component={NavLink}
                   to="/admin/dashboard"
                 >
                   Admin
@@ -103,6 +80,23 @@ export default function NavBar() {
             </Box>
           </Toolbar>
         </Container>
+
+        <Observer>
+          {() =>
+            uiStore.isLoading ? (
+              <LinearProgress
+                color="secondary"
+                sx={{
+                  position: "absolute",
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  height: 4,
+                }}
+              />
+            ) : null
+          }
+        </Observer>
       </AppBar>
     </Box>
   );

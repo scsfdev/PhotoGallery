@@ -1,7 +1,29 @@
 import axios from "axios";
+import { store } from "stores/store";
+
+const sleep = (delay: number) => {
+  return new Promise((resolve) => setTimeout(resolve, delay));
+};
 
 const api = axios.create({
-  baseURL: "http://localhost:5000/api/PGBff",
+  baseURL: import.meta.env.VITE_API_URL,
+});
+
+api.interceptors.request.use((config) => {
+  store.uiStore.isBusy();
+  return config;
+});
+
+api.interceptors.response.use(async (response) => {
+  try {
+    await sleep(500);
+    return response;
+  } catch (error) {
+    console.log(error);
+    return Promise.reject(error);
+  } finally {
+    store.uiStore.isIdle();
+  }
 });
 
 export default api;

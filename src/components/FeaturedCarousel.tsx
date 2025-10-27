@@ -1,5 +1,13 @@
-import { Card, CardMedia, CardContent, Typography, Link } from "@mui/material";
-import type { Photo } from "@types";
+import { useFeaturePhotos } from "@hooks/useFeaturePhotos";
+import {
+  Card,
+  CardMedia,
+  CardContent,
+  Typography,
+  Link,
+  Box,
+  CircularProgress,
+} from "@mui/material";
 import Carousel from "react-multi-carousel";
 import "react-multi-carousel/lib/styles.css";
 
@@ -19,7 +27,27 @@ const responsive = {
   },
 };
 
-export default function FeaturedCarousel({ photos }: { photos: Photo[] }) {
+export default function FeaturedCarousel() {
+  // feature hook rely on primary hook
+  const { featurePhotos, isPending: featurePhotosPending } =
+    useFeaturePhotos(5);
+
+  if (featurePhotosPending) {
+    return (
+      <Box sx={{ display: "flex", justifyContent: "center", mt: 5 }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (!featurePhotos || featurePhotos.length === 0) {
+    return (
+      <Typography variant="h6" sx={{ mt: 3, textAlign: "center" }}>
+        No photos available!
+      </Typography>
+    );
+  }
+
   return (
     <Carousel
       responsive={responsive}
@@ -33,13 +61,13 @@ export default function FeaturedCarousel({ photos }: { photos: Photo[] }) {
       // containerClass={styles.carouselContainer} // optional for custom styling
       // itemClass={styles.carouselitempadding} // optional for padding adjustments
     >
-      {photos.map((photo) => (
+      {featurePhotos.map((photo) => (
         <Link
           key={photo.photoGuid}
           style={{ textDecoration: "none" }}
           href={`/photos/${photo.photoGuid}`}
         >
-          <Card sx={{ m: 1, width: 220, height: 150}}>
+          <Card sx={{ m: 1, width: 220, height: 150 }}>
             <CardMedia
               component="img"
               sx={{

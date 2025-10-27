@@ -25,7 +25,7 @@ export default function PhotoCard({ photo }: Props) {
   const navigate = useNavigate();
 
   const handleClickImage = () => {
-    navigate(`/photo/${photo.photoGuid}`); // SPA navigation
+    navigate(`/photos/${photo.photoGuid}`); // SPA navigation
   };
 
   const handleLike = () => {
@@ -82,7 +82,7 @@ export default function PhotoCard({ photo }: Props) {
             animation="wave" // nice loading wave effect
           />
         )}
-        
+
         <CardMedia
           component="img"
           image={photo.url}
@@ -93,7 +93,7 @@ export default function PhotoCard({ photo }: Props) {
             objectFit: "cover",
             borderTopLeftRadius: 12, // optional: match card rounding
             borderTopRightRadius: 12, // optional: match card rounding
-             display: imgLoaded ? "block" : "none", // hide until loaded
+            display: imgLoaded ? "block" : "none", // hide until loaded
             transition: "opacity 0.3s",
           }}
           onLoad={() => setImgLoaded(true)} // trigger when image finishes loading
