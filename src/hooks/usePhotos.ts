@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "react-router-dom";
 
 export const usePhotos = (id?: string) => {
-  //const queryClient = useQueryClient();
+  //const queryClient = useQueryClient();   // <<-- Chap 59 use for update.
   const location = useLocation();
 
   const { data: photos, isPending } = useQuery({
@@ -20,8 +20,10 @@ export const usePhotos = (id?: string) => {
     queryFn: async () => {
       return await getPhotoByGuid(id!);
     },
-    enabled: !!id,
+    enabled: !!id, // If id is empty, disable this query hook.
   });
+
+  // For Create with response, Chapter 70
 
   return { photos, isPending, photo, isLoadingPhoto };
 };

@@ -1,5 +1,6 @@
 import {
   Box,
+  Button,
   CircularProgress,
   Container,
   Divider,
@@ -8,7 +9,7 @@ import {
   Typography,
 } from "@mui/material";
 import { useState } from "react";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { Place } from "@mui/icons-material";
 import { usePhotos } from "@hooks/usePhotos";
 
@@ -92,7 +93,16 @@ export default function PhotoDetailPage() {
         {/* Right: Metadata */}
         <Box sx={{ flex: 1, overflowY: "auto", maxHeight: "100vh" }}>
           <Stack direction="column" spacing={2}>
-            <Container />
+            <Box display="flex" justifyContent="right">
+              <Button
+                variant="contained"
+                component={Link}
+                to={`/admin-main/manage/${photo.photoGuid}`}
+              >
+                {" "}
+                Edit
+              </Button>
+            </Box>
             <Typography variant="h5" fontWeight="bold">
               {photo.title}
             </Typography>
