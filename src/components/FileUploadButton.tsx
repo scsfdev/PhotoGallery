@@ -1,6 +1,7 @@
-import { Button, styled } from "@mui/material";
+import { Box, Button, styled, Typography } from "@mui/material";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
-import {  type ChangeEvent } from "react";
+import { useState, type ChangeEvent } from "react";
+
 
 interface FileUploadButtonProps {
   onFileSelect: (file: File | null, url: string | null) => void;
@@ -18,7 +19,10 @@ const VisuallyHiddenInput = styled("input")({
   width: 1,
 });
 
-export default function FileUploadButton({ onFileSelect }: FileUploadButtonProps) {
+export default function FileUploadButton({
+  onFileSelect,
+}: FileUploadButtonProps) {
+  const [fileName, setFileName] = useState<string>("Browse an image file");
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     event.preventDefault();
@@ -27,35 +31,46 @@ export default function FileUploadButton({ onFileSelect }: FileUploadButtonProps
     if (selectedFile) {
       // 1. Get the actual File object
       const fileObject = selectedFile;
-      
+
       // 2. Generate the temporary URL for preview
       const previewUrl = URL.createObjectURL(fileObject);
-      
+
       // 3. Pass both the File and the URL back to the parent
       onFileSelect(fileObject, previewUrl);
-      
+      setFileName(fileObject.name);
     } else {
       // 4. If selection is cleared, pass null for both
       onFileSelect(null, null);
+      setFileName("Browse an image file");
     }
   };
 
   return (
     <>
-      <Button
-        component="label"
-        role={undefined}
-        variant="contained"
-        tabIndex={-1}
-        startIcon={<CloudUploadIcon />}
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "row",
+          gap: 6,
+          alignItems: "center",
+        }}
       >
-        Upload file
-        <VisuallyHiddenInput
-          type="file"
-          accept="image/*"
-          onChange={handleFileChange}
-        />
-      </Button>
+        <Button
+          component="label"
+          role={undefined}
+          variant="contained"
+          tabIndex={-1}
+          startIcon={<CloudUploadIcon />}
+        >
+          Upload file
+          <VisuallyHiddenInput
+            type="file"
+            accept="image/*"
+            onChange={handleFileChange}
+          />
+        </Button>
+        <Typography color="text.secondary">{fileName}</Typography>
+      </Box>
     </>
   );
 }

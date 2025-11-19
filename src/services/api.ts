@@ -9,7 +9,16 @@ const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
 });
 
+const countryApi = axios.create({
+  baseURL: import.meta.env.VITE_COUNTRY_API_URL,
+});
+
 api.interceptors.request.use((config) => {
+  store.uiStore.isBusy();
+  return config;
+});
+
+countryApi.interceptors.request.use((config) => {
   store.uiStore.isBusy();
   return config;
 });
@@ -26,4 +35,17 @@ api.interceptors.response.use(async (response) => {
   }
 });
 
+countryApi.interceptors.response.use(async (response) => {
+  try {
+    await sleep(500);
+    return response;
+  } catch (error) {
+    console.log(error);
+    return Promise.reject(error);
+  } finally {
+    store.uiStore.isIdle();
+  }
+});
+
 export default api;
+export { countryApi };

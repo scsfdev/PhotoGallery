@@ -5,6 +5,6 @@ export interface PhotoCategory {
 
 export interface Category {
   categoryGuid: string;
-  name: string;
+  title: string;
   description?: string;
 }
