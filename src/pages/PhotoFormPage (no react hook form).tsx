@@ -11,15 +11,10 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-
+import type { Category } from "@types";
 import countries from "@utils/CountryList";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Controller, useForm } from "react-hook-form";
-import { photoSchema, type PhotoSchema } from "schemas/photoSchema";
-import { zodResolver } from "@hookform/resolvers/zod";
-import TextInput from "@components/TextINput";
-import DateInput from "@components/DateInput";
 
 interface UploadedFileState {
   file: File | null;
@@ -31,45 +26,25 @@ const initialUploadedFileState: UploadedFileState = {
   previewUrl: null,
 };
 
-export default function PhotoFormPage() {
+export default function PhotoFormPageNoRHF() {
   const { photoGuid } = useParams();
   const { photo, isLoadingPhoto } = usePhotos(photoGuid);
   const { categories, isPending } = useCategories();
-  const { isPending: isUploading, isSuccess } = useUploadPhoto();
-
-  const { reset, control, handleSubmit } = useForm<PhotoSchema>({
-    mode: "onTouched",
-    resolver: zodResolver(photoSchema),
-    defaultValues: {
-      title: "",
-      description: "",
-      location: "",
-      country: "",
-      dateTaken: new Date(), // Default to a Date object
-      category: [], // Default to empty array
-    },
-  });
-
-  useEffect(() => {
-    if (photo) {
-      const defaultFormValues: PhotoSchema = {
-        title: photo.title,
-        description: photo.description,
-        location: photo.location,
-        country: photo.country,
-        dateTaken: photo.dateTaken ? new Date(photo.dateTaken) : new Date(),
-        category: photo.photoCategories ?? [],
-      };
-      reset(defaultFormValues);
-    }
-  }, [photo, reset]);
-
-  const onSubmit = (data: PhotoSchema) => {
-    console.log(data);
-  };
+  const { mutate, isPending: isUploading, isSuccess } = useUploadPhoto();
 
   // Api call to get country list but could not find a good complete Country List api, so create local list.
   //const { countries } = useCountries();
+
+  const [selectedOptions, setSelectedOptions] = useState<Category[]>(
+    photo?.photoCategories || []
+  );
+
+  const initialCountry = countries.find(
+    (c) => c.label === photo?.country || c.code === photo?.country
+  );
+  const [selectedCountry, setSelectedCountry] = useState(
+    initialCountry ?? null
+  );
 
   const [uploadedFile, setUploadedFile] = useState<UploadedFileState>(
     initialUploadedFileState
@@ -100,7 +75,7 @@ export default function PhotoFormPage() {
         URL.revokeObjectURL(uploadedFile.previewUrl);
       }
       setUploadedFile(initialUploadedFileState);
-      //setSelectedOptions([]);
+      setSelectedOptions([]);
 
       // Navigate back to PhotoDetail Page.
       if (photo?.photoGuid) {
@@ -126,6 +101,53 @@ export default function PhotoFormPage() {
     } else {
       navigate(`/`);
     }
+  };
+
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    const formData = new FormData(event.currentTarget);
+
+    // Append each selected category string to FormData under the name 'categories'
+    selectedOptions.forEach((category) => {
+      formData.append("categoryGuids", category.categoryGuid);
+    });
+
+    if (photo?.photoGuid) {
+      formData.append("photoGuid", photo.photoGuid);
+    }
+
+    if (selectedCountry) {
+      formData.append("country", selectedCountry.label);
+    }
+
+    // Check if a file is present in the state and append it.
+    if (uploadedFile.file) {
+      // Note: The name "image" or "file" must match what BFF expects
+      formData.append("file", uploadedFile.file);
+    }
+
+    // CategoryGuids will be sent as multiple entries with the same key in FormData.
+    // categoryGuids will be an array of strings in the backend.
+    const data: { [key: string]: FormDataEntryValue | FormDataEntryValue[] } =
+      {};
+
+    for (const [key, value] of formData.entries()) {
+      if (data[key]) {
+        // If key already exists, convert to array or push to existing array
+        if (Array.isArray(data[key])) {
+          (data[key] as FormDataEntryValue[]).push(value);
+        } else {
+          data[key] = [data[key] as FormDataEntryValue, value];
+        }
+      } else {
+        data[key] = value;
+      }
+    }
+
+    console.log(data);
+
+    mutate(formData);
   };
 
   if (isLoadingPhoto || isPending || isUploading) {
@@ -154,62 +176,40 @@ export default function PhotoFormPage() {
         {/* Left Box - Form */}
         <Box
           component="form"
-          onSubmit={handleSubmit(onSubmit)}
+          onSubmit={handleSubmit}
           display="flex"
           flexDirection="column"
           gap={3}
           sx={{
             flexGrow: 1,
-            flexBasis: { md: "45%" }, // Takes ~45% of the row width on desktop
+            flexBasis: { md: "45%" }, // Takes ~65% of the row width on desktop
           }}
         >
-          <TextInput label="Title" control={control} name="title" />
+          <TextField name="title" label="Title" defaultValue={photo?.title} />
 
-          <TextInput
-            label="Description"
-            control={control}
+          <TextField
             name="description"
+            label="Description"
             multiline
             rows={3}
+            defaultValue={photo?.description}
           />
 
-          <TextInput label="Location" control={control} name="location" />
+          <TextField
+            name="location"
+            label="Location"
+            defaultValue={photo?.location}
+          />
 
-          <Controller
+          {/* <TextField
             name="country"
-            control={control}
-            render={({ field: { onChange, value }, fieldState: { error } }) => {
-              const selectedCountryObject =
-                countries.find((c) => c.label === value) ?? null;
+            label="Country"
+            defaultValue={photo?.country}
+          /> */}
 
-              return (
-                <Autocomplete
-                  id="country-select"
-                  options={countries}
-                  autoHighlight
-                  getOptionLabel={(option) => option.label}
-                  value={selectedCountryObject}
-                  onChange={(_, newValue) => {
-                    onChange(newValue ? newValue.label : "");
-                  }}
-                  isOptionEqualToValue={(option, value) =>
-                    option.code === value.code
-                  }
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label="Country"
-                      error={!!error}
-                      helperText={error ? error.message : null}
-                    />
-                  )}
-                />
-              );
-            }}
-          />
-
-          {/* <Autocomplete
+          <Autocomplete
             id="country-select"
+            // sx={{ width: 300 }}
             options={countries}
             value={selectedCountry}
             autoHighlight
@@ -246,49 +246,19 @@ export default function PhotoFormPage() {
                 }}
               />
             )}
-          /> */}
+          />
 
           {/* if this is new photo, allow user to select Date Taken At. If this is editing existing, not allow to change this date. */}
           {!photo?.photoGuid && (
-            <DateInput
-              label="Date Taken At"
-              control={control}
+            <TextField
               name="dateTaken"
-              // defaultValue={new Date().toISOString().split("T")[0]}
+              label="Date Taken At"
+              type="date"
+              defaultValue={new Date().toISOString().split("T")[0]}
             />
           )}
 
-          <Controller
-            name="category"
-            control={control}
-            render={({ field: { onChange, value }, fieldState: { error } }) => (
-              <Autocomplete
-                autoHighlight
-                multiple // Allow multiple selections
-                id="category-select"
-                options={options}
-                value={value ?? []}
-                getOptionLabel={(option) => option.title}
-                onChange={(_, newValue) => {
-                  onChange(newValue); // Update form value with selected categories
-                }}
-                isOptionEqualToValue={(option, selectedValue) =>
-                  option.categoryGuid === selectedValue.categoryGuid
-                }
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    label="Categories"
-                    error={!!error}
-                    helperText={error ? error.message : null}
-                    placeholder="Select categories"
-                  />
-                )}
-              />
-            )}
-          />
-
-          {/* <Autocomplete<Category, true>
+          <Autocomplete<Category, true>
             autoHighlight
             multiple
             id="auto-highlight"
@@ -309,7 +279,7 @@ export default function PhotoFormPage() {
                 placeholder="Select categories"
               />
             )}
-          /> */}
+          />
 
           <FileUploadButton onFileSelect={handleFileChange} />
           <Box display={"flex"} justifyContent={"end"} gap={3}>
