@@ -1,6 +1,8 @@
+import { useCategories } from "@hooks/useCategories";
 import { FilterList } from "@mui/icons-material";
 import {
   Box,
+  CircularProgress,
   ListItemText,
   MenuItem,
   MenuList,
@@ -9,6 +11,24 @@ import {
 } from "@mui/material";
 
 export default function CategoryList() {
+  const { categories, isPending } = useCategories();
+
+  if (isPending) {
+    return (
+      <Box sx={{ display: "flex", justifyContent: "center", mt: 5 }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (!categories || categories.length === 0) {
+    return (
+      <Typography variant="h6" sx={{ mt: 3, textAlign: "center" }}>
+        No Category available!
+      </Typography>
+    );
+  }
+
   return (
     <Box
       sx={{
@@ -27,15 +47,11 @@ export default function CategoryList() {
           Categories
         </Typography>
         <MenuList>
-          <MenuItem>
-            <ListItemText primary="Categories 1"></ListItemText>
-          </MenuItem>
-          <MenuItem>
-            <ListItemText primary="Categories 2"></ListItemText>
-          </MenuItem>
-          <MenuItem>
-            <ListItemText primary="Categories 3"></ListItemText>
-          </MenuItem>
+          {categories.map((category) => (
+            <MenuItem key={category.categoryGuid}>
+              <ListItemText primary={category.title}></ListItemText>
+            </MenuItem>
+          ))}
         </MenuList>
       </Paper>
     </Box>

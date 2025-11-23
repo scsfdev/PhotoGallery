@@ -1,8 +1,9 @@
 import type { Photo } from "@types";
 import api from "./api";
 
-export const getPhotos = async (): Promise<Photo[]> => {
-  const response = await api.get<Photo[]>("/photos");
+export const getPhotos = async (catId?: string): Promise<Photo[]> => {
+  const url = catId ? `/photos?categoryId=${catId}` : "/photos";
+  const response = await api.get<Photo[]>(url);
   return response.data;
 };
 

@@ -12,30 +12,30 @@ import {
   Typography,
 } from "@mui/material";
 
-import countries from "@utils/CountryList";
+
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Controller, useForm } from "react-hook-form";
 import { photoSchema, type PhotoSchema } from "schemas/photoSchema";
 import { zodResolver } from "@hookform/resolvers/zod";
-import TextInput from "@components/TextINput";
+import TextInput from "@components/TextInput";
 import DateInput from "@components/DateInput";
+import buildFormData from "@utils/photoFormUtils";
 
-interface UploadedFileState {
-  file: File | null;
-  previewUrl: string | null;
-}
+import { initialUploadedFileState } from "constants/initialUploadedFileState";
+import countries from "constants/countryData";
+import type { UploadedFileState } from "@types";
 
-const initialUploadedFileState: UploadedFileState = {
-  file: null,
-  previewUrl: null,
-};
+
+
+
 
 export default function PhotoFormPage() {
+  const navigate = useNavigate();
   const { photoGuid } = useParams();
   const { photo, isLoadingPhoto } = usePhotos(photoGuid);
   const { categories, isPending } = useCategories();
-  const { isPending: isUploading, isSuccess } = useUploadPhoto();
+  const { mutateAsync, isPending: isUploading, isSuccess } = useUploadPhoto();
 
   const { reset, control, handleSubmit } = useForm<PhotoSchema>({
     mode: "onTouched",
@@ -64,8 +64,32 @@ export default function PhotoFormPage() {
     }
   }, [photo, reset]);
 
-  const onSubmit = (data: PhotoSchema) => {
-    console.log(data);
+  const onSubmit = async (data: PhotoSchema) => {
+    try {
+      // Prepare FormData
+      const formData = buildFormData(data, photo, uploadedFile.file);
+
+      // Call the upload mutation
+      const newPhoto = await mutateAsync(formData);
+
+      // Clean up.
+      if (uploadedFile.previewUrl) {
+        URL.revokeObjectURL(uploadedFile.previewUrl);
+      }
+      setUploadedFile(initialUploadedFileState);
+
+      // Navigate back to PhotoDetail Page if it is modification.
+      const targetGuid = photo?.photoGuid || newPhoto.photoGuid;
+      if (targetGuid) {
+        navigate(`/photos/${targetGuid}`);
+      } else {
+        // If this is new upload, navigate to Home Page.
+        // TODO: Once Authorization is in place, navigate to Admin Home Page.
+        navigate(`/`);
+      }
+    } catch (error) {
+      console.error("Error preparing photo upload:", error);
+    }
   };
 
   // Api call to get country list but could not find a good complete Country List api, so create local list.
@@ -74,8 +98,6 @@ export default function PhotoFormPage() {
   const [uploadedFile, setUploadedFile] = useState<UploadedFileState>(
     initialUploadedFileState
   );
-
-  const navigate = useNavigate();
 
   useEffect(() => {
     if (photo?.url) {
@@ -96,18 +118,7 @@ export default function PhotoFormPage() {
 
   useEffect(() => {
     if (isSuccess) {
-      if (uploadedFile.previewUrl) {
-        URL.revokeObjectURL(uploadedFile.previewUrl);
-      }
-      setUploadedFile(initialUploadedFileState);
       //setSelectedOptions([]);
-
-      // Navigate back to PhotoDetail Page.
-      if (photo?.photoGuid) {
-        navigate(`/photos/${photo?.photoGuid}`);
-      } else {
-        navigate(`/`);
-      }
     }
   }, [isSuccess, uploadedFile.previewUrl, navigate, photo?.photoGuid]);
 

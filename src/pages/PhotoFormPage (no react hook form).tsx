@@ -12,7 +12,7 @@ import {
   Typography,
 } from "@mui/material";
 import type { Category } from "@types";
-import countries from "@utils/CountryList";
+import countries from "constants/countryData";
 import { useEffect, useState, type FormEvent } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
